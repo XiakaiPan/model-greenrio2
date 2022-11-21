@@ -1,4 +1,4 @@
 ./build/
 **/build**
-core.*
+core.2*
 ./model
