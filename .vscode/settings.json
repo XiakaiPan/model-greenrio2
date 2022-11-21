@@ -3,6 +3,7 @@
         "*.ipynb": "python",
         "*.sv": "bsv",
         "iostream": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "cstring": "cpp"
     }
 }
