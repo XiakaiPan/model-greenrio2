@@ -1,0 +1,362 @@
+Simulator:
+  { DRAM: { MemoryMap: { Base: 0x80000000, Length: 0x10000000 } }, Processors: [
+        {
+          # Processor Architecture Config
+          XLEN: 64,
+          SupportISA: [I, M, C, A], ##rsv
+          SupportMode: [M, S, U], ##rsv
+          # Speculation: false,
+          Speculation: true,
+          ForwardResult: true,
+          MemoryModel: SC, ##rsv
+          Fusion: true,
+          #------- Micro-Architecure -------#
+          iCache: { iCacheLatency: 2, iCacheAlignByte: 8 },
+          dCache: { dCacheLatency: 2, dCacheAlignByte: 8 },
+          Rcu:
+            {
+              RenameRegister: true,
+              AllocWidth: 2,
+              DeallocWidth: 2,
+              ReorderBuffer: { EntryCount: 16 },
+              PhysicalRegisterFile:
+                {
+                  Int: { RegCount: 46 },
+                  Fp: { RegCount: 0 },
+                  UnifiedRegFile: false,
+                },
+
+              RecoveryPolicy: {
+                  RollBack: true,
+                  SnapshotCount: 0, ###rsv
+                },
+            },
+          BPU:
+            {
+              PredictorChoice: Tournament,
+              uBTB: { Enable: false, Size: 32 },
+              BTB: { Enable: true, Size: 1024 },
+              RAS: { Enable: true, Size: 16 },
+              Gshare: { Size: 16 },
+              Tournament:
+                {
+                  LocalPredSize: 1024,
+                  LocalHistoryEntryBits: 10,
+                  GlobalHistoryBits: 12,
+                },
+              BiMode: { ChoicePredBits: 12, GlobalHistoryBits: 12 },
+              TournamentMultiGroup:
+                {
+                  LocalPredSize: 1024,
+                  LocalHistoryEntryBits: 10,
+                  GlobalHistoryBits: 12,
+                  GlobalGroupCount: 2,
+                },
+            },
+          Lsq:
+            { LoadQueue: { EntryCount: 68 }, StoreQueue: { EntryCount: 68 } },
+          Resources:
+            {
+              RegFileReadPort:
+                [
+                  { Latency: 0, Type: Int },
+                  { Latency: 0, Type: Int },
+                  { Latency: 0, Type: Int },
+                  { Latency: 0, Type: Int },
+                ],
+              WriteBackPort:
+                [
+                  {
+                    Latency: 1,
+                    Type: Int,
+                    WakeUpSchedualers: [7, 8, 9, 10, 11, 12],
+                  },
+                  {
+                    Latency: 1,
+                    Type: Int,
+                    WakeUpSchedualers: [7, 8, 9, 10, 11, 12],
+                  },
+                  {
+                    Latency: 1,
+                    Type: Int,
+                    WakeUpSchedualers: [7, 8, 9, 10, 11, 12],
+                  },
+                  {
+                    Latency: 1,
+                    Type: Int,
+                    WakeUpSchedualers: [7, 8, 9, 10, 11, 12],
+                  },
+                  {
+                    Latency: 1,
+                    Type: Int,
+                    WakeUpSchedualers: [7, 8, 9, 10, 11, 12],
+                  },
+                ],
+              FunctionUnitPool:
+                [
+                  {
+                    Name: ALU0,
+                    FuncType: ALU,
+                    Latency: 1,
+                    Pipelined: true,
+                    WriteBackPort: [0],
+                  },
+                  {
+                    Name: ALU1,
+                    FuncType: ALU,
+                    Latency: 1,
+                    Pipelined: true,
+                    WriteBackPort: [1],
+                  },
+                  {
+                    Name: BRU0,
+                    FuncType: BRU,
+                    Latency: 1,
+                    Pipelined: true,
+                    WriteBackPort: [2],
+                  },
+                  {
+                    Name: LSU0,
+                    FuncType: LSU,
+                    Latency: 1,
+                    Pipelined: true,
+                    WriteBackPort: [3],
+                  },
+                  {
+                    Name: CSR0,
+                    FuncType: CSR,
+                    Latency: 1,
+                    Pipelined: true,
+                    WriteBackPort: [3],
+                  },
+                  {
+                    Name: DIV0,
+                    FuncType: DIV,
+                    Latency: 17,
+                    Pipelined: false,
+                    WriteBackPort: [1],
+                  },
+                  {
+                    Name: MUL0,
+                    FuncType: MUL,
+                    Latency: 1,
+                    Pipelined: true,
+                    WriteBackPort: [4],
+                  },
+                ],
+              Schedulers: [
+                  {
+                    Name: ALU0Queue, ##0
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Order,
+                    WakeUpPolicy: OperandReady, ##  RfQueue
+                    RFReadPort: [0, 1],
+                    FunctionUnitPool: [],
+                    SubScheduler: [7],
+                  },
+                  {
+                    Name: ALU1Queue, ##1
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Order,
+                    WakeUpPolicy: OperandReady, ##  RfQueue
+                    RFReadPort: [2, 3],
+                    FunctionUnitPool: [],
+                    SubScheduler: [8],
+                  },
+                  {
+                    Name: BRUQueue, ##2
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Order,
+                    WakeUpPolicy: OperandReady, ###OperandReady
+                    RFReadPort: [0, 1],
+                    FunctionUnitPool: [],
+                    SubScheduler: [9],
+                  },
+                  {
+                    Name: LSU0Queue, ##3
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Order,
+                    WakeUpPolicy: OperandReady,
+                    RFReadPort: [2, 3],
+                    FunctionUnitPool: [],
+                    SubScheduler: [10],
+                  },
+                  {
+                    Name: CSR_Buffer, ##4
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Order,
+                    WakeUpPolicy: Commit,
+                    RFReadPort: [0, 1],
+                    FunctionUnitPool: [4],
+                    SubScheduler: [],
+                  },
+                  {
+                    Name: MUL0Queue, ##5
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Order,
+                    WakeUpPolicy: OperandReady,
+                    RFReadPort: [0, 1],
+                    FunctionUnitPool: [],
+                    SubScheduler: [11],
+                  },
+                  {
+                    Name: DIVQueue, ##6
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Order,
+                    WakeUpPolicy: OperandReady,
+                    RFReadPort: [2, 3],
+                    FunctionUnitPool: [],
+                    SubScheduler: [12],
+                  },
+                  {
+                    Name: ALU0_RS, ##7
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Age-Order, # In-Order, Out-of-Order, In-Age-Order
+                    WakeUpPolicy: ResvrStation, # None,RfQueue,OperandReady,ResvrStation,Commit
+                    RFReadPort: [],
+                    FunctionUnitPool: [0],
+                    SubScheduler: [],
+                  },
+                  {
+                    Name: ALU1_RS, ##8
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Age-Order, # In-Order, Out-of-Order, In-Age-Order
+                    WakeUpPolicy: ResvrStation, # None,RfQueue,OperandReady,ResvrStation,Commit
+                    RFReadPort: [],
+                    FunctionUnitPool: [1],
+                    SubScheduler: [],
+                  },
+                  {
+                    Name: BRU0_RS, ##9
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Age-Order, # In-Order, Out-of-Order, In-Age-Order
+                    WakeUpPolicy: ResvrStation, # None,RfQueue,OperandReady,ResvrStation,Commit
+                    RFReadPort: [],
+                    FunctionUnitPool: [2],
+                    SubScheduler: [],
+                  },
+                  {
+                    Name: LSU0_RS, ##10
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Age-Order, # In-Order, Out-of-Order, In-Age-Order
+                    WakeUpPolicy: ResvrStation, # None,RfQueue,OperandReady,ResvrStation,Commit
+                    RFReadPort: [],
+                    FunctionUnitPool: [3],
+                    SubScheduler: [],
+                  },
+                  {
+                    Name: MUL_RS, #11
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Age-Order, # In-Order, Out-of-Order, In-Age-Order
+                    WakeUpPolicy: ResvrStation, # None,RfQueue,OperandReady,ResvrStation,Commit
+                    RFReadPort: [],
+                    FunctionUnitPool: [5],
+                    SubScheduler: [],
+                  },
+                  {
+                    Name: DIV_RS, #12
+                    EntryCount: 4,
+                    EnqueWidth: 1,
+                    DequeWidth: 1,
+                    IssuePolicy: In-Age-Order, # In-Order, Out-of-Order, In-Age-Order
+                    WakeUpPolicy: ResvrStation, # None,RfQueue,OperandReady,ResvrStation,Commit
+                    RFReadPort: [],
+                    FunctionUnitPool: [6],
+                    SubScheduler: [],
+                  },
+                ],
+            },
+          Stages:
+            {
+              Fetch1:
+                {
+                  Latency: 1,
+                  NextStage: Fetch2,
+                  MaxProcessInsnCount: 4,
+                  MustTakenAllInsn: true,
+                  RedirectLatency: 1,
+                  StageInfo: {
+                      FetchByteWidth: 8,
+                      InflightQueueSize: 3, ## >= icache latency +1
+                      PredecodeEnable: false,
+                    },
+                },
+              Fetch2:
+                {
+                  Latency: 1,
+                  NextStage: Decode,
+                  MaxProcessInsnCount: 4,
+                  MustTakenAllInsn: true,
+                  RedirectLatency: 1,
+                  StageInfo: { InstrBufferSize: 16 },
+                },
+              Decode:
+                {
+                  Latency: 1,
+                  NextStage: Dispatch,
+                  MaxProcessInsnCount: 2,
+                  MustTakenAllInsn: true,
+                  RedirectLatency: -1,
+                  StageInfo: { DecodeQueueSize: 6 },
+                },
+              Dispatch:
+                {
+                  Latency: 1,
+                  NextStage: IEW,
+                  MaxProcessInsnCount: 2,
+                  MustTakenAllInsn: false,
+                  RedirectLatency: -1,
+                  StageInfo: { Schedulers: [0, 1, 2, 3, 4, 5, 6] },
+                },
+              IEW:
+                {
+                  Latency: 1,
+                  NextStage: None,
+                  MaxProcessInsnCount: -1,
+                  MustTakenAllInsn: false,
+                  RedirectLatency: 1,
+                  StageInfo: {},
+                },
+              Commit:
+                {
+                  Latency: 1,
+                  NextStage: Commit,
+                  MaxProcessInsnCount: 2,
+                  MustTakenAllInsn: true,
+                  RedirectLatency: 1,
+                  StageInfo: {},
+                },
+            },
+          Cache: {},
+        },
+      ], CLINT: {
+        MsipBaseAddr: 0x2000000,
+        MtimecmpBaseAddr: 0x2004000,
+        MtimeBaseAddr: 0x200bff8,
+        MtimeTickPeriodType: 1, #
+        Interleave: 100,
+      } }
